@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: flask-deployment
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: flask
@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: flask-app
-        image: aditya929/todo-flask-app:v1 
+        image: aditya929/todo-app:v2
         ports:
         - containerPort: 8000
         env:
