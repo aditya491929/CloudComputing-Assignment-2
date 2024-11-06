@@ -1,5 +1,6 @@
-from flask import Flask, render_template,request,redirect,url_for # For flask implementation
+from flask import Flask, jsonify, render_template,request,redirect,url_for # For flask implementation
 from pymongo import MongoClient # Database connector
+from pymongo.errors import ConnectionFailure
 from bson.objectid import ObjectId # For ObjectId to work
 from bson.errors import InvalidId # For catching InvalidId exception for ObjectId
 import os
@@ -12,13 +13,28 @@ todos = db.todo #Select the collection
 
 app = Flask(__name__)
 title = "TODO with Flask"
-heading = "ToDo Reminder"
+heading = "ToDo Reminder:V3"
 #modify=ObjectId()
 
 def redirect_url():
 	return request.args.get('next') or \
 		request.referrer or \
 		url_for('index')
+
+@app.route('/health')
+def healthz():
+    # This endpoint returns a simple 200 OK response to indicate that the app is alive
+    return jsonify(status="alive"), 200
+
+# Readiness probe endpoint
+@app.route('/ready')
+def ready():
+    try:
+        client.admin.command('ping')
+        return jsonify(status="ready"), 200
+    except ConnectionFailure:
+        # If there's a connection failure, return a 503 Service Unavailable status
+        return jsonify(status="unready"), 503
 
 @app.route("/list")
 def lists ():

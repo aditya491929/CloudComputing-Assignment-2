@@ -1,0 +1,68 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: flask-deployment-alert-rules
+  namespace: default  
+spec:
+  groups:
+    - name: flask-deployment-alerts
+      rules:
+        # Alert for high pod restart rate
+        - alert: HighPodRestarts
+          expr: rate(kube_pod_container_status_restarts_total{pod=~"flask-deployment.*"}[5m]) > 0.1
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "High pod restart rate detected in Flask Deployment"
+            description: "Pod {{ $labels.pod }} in namespace {{ $labels.namespace }} is restarting frequently."
+
+        # Alert for failing liveness probe
+        - alert: FailingLivenessProbe
+          expr: kube_pod_container_status_ready{condition="false", pod=~"flask-deployment.*"} > 0
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Failing liveness probe detected in Flask Deployment"
+            description: "Pod {{ $labels.pod }} in namespace {{ $labels.namespace }} has a failing liveness probe."
+
+        # Alert for failing readiness probe
+        - alert: FailingReadinessProbe
+          expr: kube_pod_container_status_ready{condition="false", pod=~"flask-deployment.*"} > 0
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Failing readiness probe detected in Flask Deployment"
+            description: "Pod {{ $labels.pod }} in namespace {{ $labels.namespace }} has a failing readiness probe."
+
+        # Alert for high memory usage
+        - alert: HighMemoryUsage
+          expr: container_memory_usage_bytes{pod=~"flask-deployment.*"} / container_spec_memory_limit_bytes{pod=~"flask-deployment.*"} > 0.9
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "High memory usage in Flask Deployment"
+            description: "Pod {{ $labels.pod }} in namespace {{ $labels.namespace }} is using more than 90% of its memory limit."
+
+        # Alert for high CPU usage
+        - alert: HighCpuUsage
+          expr: rate(container_cpu_usage_seconds_total{pod=~"flask-deployment.*"}[5m]) > 0.9
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "High CPU usage in Flask Deployment"
+            description: "Pod {{ $labels.pod }} in namespace {{ $labels.namespace }} is using more than 90% of its CPU limit."
+
+        # Alert for high request latency (example if using HTTP metrics)
+        - alert: HighRequestLatency
+          expr: histogram_quantile(0.9, sum(rate(http_request_duration_seconds_bucket{pod=~"flask-deployment.*"}[5m])) by (le)) > 0.5
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: "High request latency in Flask Deployment"
+            description: "Pod {{ $labels.pod }} in namespace {{ $labels.namespace }} has high request latency (90th percentile > 0.5s)."

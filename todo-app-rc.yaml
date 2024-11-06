@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: ReplicationController
+metadata:
+  name: flask-rc
+spec:
+  replicas: 1
+  selector:
+    app: flask  
+  template:
+    metadata:
+      labels:
+        app: flask
+    spec:
+      containers:
+      - name: flask-app
+        image: aditya929/todo-app:v2
+        ports:
+        - containerPort: 8000
+        env:
+        - name: MONGO_HOST
+          value: "mongo-service"
+        - name: MONGO_PORT
+          value: "27017"
